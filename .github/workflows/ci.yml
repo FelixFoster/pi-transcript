@@ -1,0 +1,29 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+        pi: ["0.85.1", "1.5.0"]
+    env:
+      PI_OFFLINE: "1"
+      PI_TELEMETRY: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Select host version (do not rewrite the lockfile)
+        run: npm install --ignore-scripts --no-save --package-lock=false --no-audit --no-fund @earendil-works/pi-coding-agent@${{ matrix.pi }} @earendil-works/pi-tui@${{ matrix.pi }}
+      - run: npm run check
+      - run: python3 tests/pty_smoke.py
+      - run: npm pack --dry-run --ignore-scripts

@@ -1,0 +1,8 @@
+node_modules/
+*.tgz
+coverage/
+.test-artifacts/
+.pi/
+.env
+.env.*
+.DS_Store
