@@ -4,7 +4,9 @@
 
 **Your model can compact its context. You should still be able to read what you asked.**
 
-A read-only conversation viewer for [Pi](https://pi.dev), built with public extension APIs. Open `/transcript` to read and search the active branch **including messages before compaction**. Tool output and thinking are folded by default; your latest question stays in a small preview above the editor.
+A searchable conversation reader for [Pi](https://pi.dev). Find saved questions and answers from before compaction, fold noisy tool output inside the reader, and keep your latest question in view.
+
+**This opens a separate reading window. It does not change the main chat's scrollback or the model's memory.**
 
 [简体中文](README.zh-CN.md) · [Architecture](docs/architecture.md) · [Security](SECURITY.md)
 
@@ -24,41 +26,47 @@ Transcript · 1/8 · active branch · read-only snapshot
 
 *Illustrative layout, not a screenshot of a real conversation.*
 
-## Install
+## Get started in three steps
 
-Requires Node.js **22.19+** and the `@earendil-works` distribution of Pi.
+Already use Pi? Follow the steps below. The extension reuses Pi's own components; **you do not need to install a separate UI library**. See [compatibility](#compatibility-and-tests) for supported versions.
+
+### 1. Install in your terminal
+
+Run this in a terminal, not in Pi's chat input:
 
 ```bash
 pi install git:github.com/FelixFoster/pi-transcript@v0.1.0
 ```
 
-Then run `/reload` in Pi. Open the reader with:
+### 2. Load it in Pi
+
+Back in Pi's chat input, enter:
+
+```text
+/reload
+```
+
+**`/reload` is Pi's built-in reload command, not a command added by this extension.** Alternatively, quit and restart Pi to load the extension at startup.
+
+### 3. Open your history
+
+In Pi, enter:
 
 ```text
 /transcript
-/transcript a phrase from your earlier question
 ```
 
-`Ctrl+Shift+H` also opens the reader when your terminal forwards that key. Use the command if the shortcut conflicts with your terminal or another extension.
-
-To try the local source without saving an install:
-
-```bash
-pi -e ./src/index.ts
-```
-
-This release is distributed via **GitHub**. There is no npm publication to install yet.
+Press **Esc or q** to close the reader and return to chat. While editing a search, Esc first leaves search editing; press it again to close.
 
 ## What it does
 
-- Reads original messages from `sessionManager.getBranch()`, not the compacted model context.
-- Opens at your latest question; Home goes back to the beginning.
-- Searches text literally, case-insensitively, including inside folded thinking/tool output. Chinese text works too.
-- Groups consecutive execution activity into a folded row. Error counts stay visible while folded.
-- Pages through long messages and wraps only visible/visited items, with a 32-item render cache.
-- Uses an overlay in both Pi's regular and fullscreen modes.
-- Displays a one-line latest-question preview above the editor, so tools and compaction don't push it out of sight.
-- Respects the active branch, including after `/tree`, `/new`, `/resume` and `/fork`.
+- **Find old questions and answers:** read original pre-compaction turns still saved in the current branch.
+- **Search by a phrase:** try `/transcript installation`. Search includes folded tool output and thinking, and supports Chinese text too.
+- **See only your questions:** open the reader and press `u`.
+- **Read with less clutter:** tool output and thinking are folded in the reader; Enter expands an entry. Error counts remain visible. The main chat is unchanged.
+- **Keep your latest question in view:** an optional one-line preview appears above Pi's chat input.
+
+The reader opens at your latest question and works in both regular and fullscreen modes. Home goes to the beginning; PgUp/PgDn page through long messages. It follows your selected conversation branch, including after `/tree`, `/new`, `/resume` and `/fork`.
 
 ## Reader controls
 
@@ -74,13 +82,22 @@ This release is distributed via **GitHub**. There is no npm publication to insta
 | c | Clear the search |
 | Esc / q | Close without changing the conversation |
 
+`Ctrl+Shift+H` also opens the reader when your terminal forwards that key. Use `/transcript` if the shortcut is intercepted.
+
 Standard selection keys honor Pi's injected keybindings. Mouse wheel scrolling and click-to-fold work when the host forwards mouse events (fullscreen mode). Regular mode remains keyboard-driven; the terminal owns its mouse scrollback.
 
 Search filters entries and opens matching activity. With a long matching entry, the reader seeks to the first match that fits on a wrapped line; use PgUp/PgDn for the rest. It is not a regex search or a per-occurrence search navigator.
 
-### Latest-question preview
+## Close, hide or disable
 
-`/transcript-pin` toggles the preview for the current runtime. It resets on reload or session replacement. To disable it for a run:
+| What you want | What to do |
+| --- | --- |
+| Close the reader and return to chat | Press **Esc or q** in the reader; leave search editing with Esc first |
+| Hide the latest-question preview | Back in Pi, enter `/transcript-pin`; enter it again to restore the preview |
+| Disable the extension without removing it | Run `pi config` in a terminal, uncheck this extension, then run `/reload` in Pi |
+| Remove the extension | See [Uninstall](#uninstall) below |
+
+None of these actions deletes your conversation history. The `/transcript-pin` toggle resets on reload or session replacement. To start a run with the preview disabled, launch Pi from your terminal with:
 
 ```bash
 pi --transcript-no-pin
@@ -92,7 +109,7 @@ The preview is deliberately short. `/transcript` contains the original full text
 
 - **It does not restore history inline in Pi's main transcript or increase terminal scrollback.** Use `/transcript` for the independent reader.
 - It does not prevent compaction, reduce tokens, change model context, or make the model remember old turns.
-- It does not monkey-patch `buildContextEntries()`, `buildSessionContext()`, the renderer, or any prototype.
+- It does not replace Pi's internal methods or alter the main chat renderer.
 - It does not append duplicate messages, modify session files, export history, contact a server, or send telemetry.
 - It does not show sibling branches; select a branch with Pi's `/tree`, then reopen the reader.
 - It cannot recover text already truncated by a tool, deleted from storage, absent from an imported session, or never saved. Images are placeholders; provider metadata, extension state and hidden custom messages are not dumped.
@@ -103,7 +120,19 @@ It takes linear time/memory to project and search the saved text. Virtualized wr
 
 ## Compatibility and tests
 
-The supported test matrix targets **Pi 0.85.1 and 1.5.0**, Node.js 22 and 24. Other versions are unverified, not implicitly supported by the wildcard peer dependencies. Those peers follow Pi's package conventions and are optional so installation does not pull in a second host runtime.
+- **Pi:** tested on 0.85.1 and 1.5.0, in both regular and fullscreen modes.
+- **Node.js:** requires 22.19 or newer; tested on Node.js 22 and 24.
+- **Distribution:** those tests use `@earendil-works/pi-coding-agent`. Other versions, distributions and forks are unverified.
+
+`@earendil-works` is the publisher prefix in Pi's npm package name, **not another application to install or a service to sign up for**. The extension reuses Pi's UI components and does not install a second copy of Pi.
+
+Install this release using the GitHub command above; there is no npm publication yet. Developers can find dependency declarations in [package.json](package.json) and implementation details in [Architecture](docs/architecture.md).
+
+To try the source from a local checkout without saving an install:
+
+```bash
+pi -e ./src/index.ts
+```
 
 Tests cover:
 
@@ -127,7 +156,7 @@ python3 tests/pty_smoke.py  # Linux/macOS; Python 3 standard library only
 pi remove git:github.com/FelixFoster/pi-transcript
 ```
 
-Run `/reload`. The preview/status are cleared by shutdown and there are no patched methods to undo. Your session files are unchanged. For a temporary `-e` load, restart without that argument.
+Run the command above in a terminal. Then enter `/reload` in Pi, or restart Pi. The preview and extension status are cleared; your conversation history is unchanged. For a temporary `-e` load, restart without that argument.
 
 ## Why a separate reader?
 
