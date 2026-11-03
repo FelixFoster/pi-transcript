@@ -1,5 +1,7 @@
 # pi-transcript
 
+[![CI](https://github.com/FelixFoster/pi-transcript/actions/workflows/ci.yml/badge.svg)](https://github.com/FelixFoster/pi-transcript/actions/workflows/ci.yml)
+
 **Your model can compact its context. You should still be able to read what you asked.**
 
 A read-only conversation viewer for [Pi](https://pi.dev), built with public extension APIs. Open `/transcript` to read and search the active branch **including messages before compaction**. Tool output and thinking are folded by default; your latest question stays in a small preview above the editor.
